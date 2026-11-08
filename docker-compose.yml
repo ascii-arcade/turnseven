@@ -1,0 +1,20 @@
+services:
+  wish-template:
+    build:
+      context: .
+      args:
+        - GIT_TAG=${GIT_TAG:-dev}
+    image: ascii-arcade/wish-template:${GIT_TAG:-dev}
+    ports:
+      - ${SSH_PORT:-2222}:${ASCII_ARCADE_SSH_PORT:-2222}
+      - ${HTTP_PORT:-8080}:${ASCII_ARCADE_HTTP_PORT:-8080}
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - ASCII_ARCADE_LANG="EN"
+    volumes:
+      - ssh:/app/.ssh
+
+volumes:
+  ssh:
