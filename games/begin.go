@@ -8,7 +8,7 @@ import (
 
 const (
 	minimumPlayers = 2
-	maximumPlayers = 5
+	maximumPlayers = 6
 )
 
 func (s *Game) Begin() error {
@@ -18,11 +18,20 @@ func (s *Game) Begin() error {
 		}
 
 		s.CurrentTurnIndex = 0
+		s.DealerIndex = 0
+		s.Round = 0
+		s.Log = nil
+		s.deck = newDeck()
+		s.discard = nil
 		s.inProgress = true
 
 		for _, p := range s.players {
+			p.Points = 0
+			p.takeCards()
 			p.update(messages.TableScreen)
 		}
+
+		s.startRound()
 		return nil
 	})
 }

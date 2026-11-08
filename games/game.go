@@ -14,9 +14,21 @@ type Game struct {
 
 	Settings         Settings
 	CurrentTurnIndex int
+	DealerIndex      int
+	Round            int
+	Phase            Phase
+	Log              []LogEntry
 	inProgress       bool
 	mu               sync.Mutex
 	players          []*Player
+
+	deck      []Card
+	discard   []Card
+	choices   []pendingChoice
+	flipJobs  []*flipJob
+	dealt     int
+	passTurn  bool
+	flipSeven *Player
 }
 
 func (s *Game) InProgress() bool {
@@ -97,6 +109,7 @@ func (s *Game) RemovePlayer(player *Player) {
 			for i, p := range s.players {
 				if p.Sess.User() == player.Sess.User() {
 					s.players = slices.Delete(s.players, i, i+1)
+					s.playerRemoved(player, i)
 					break
 				}
 			}
@@ -143,14 +156,50 @@ func (s *Game) GetPlayerCount(includeDisconnected bool) int {
 }
 
 func (s *Game) GetCurrentPlayer() *Player {
+	if len(s.players) == 0 {
+		return nil
+	}
 	return s.players[s.CurrentTurnIndex]
 }
 
+func (s *Game) Dealer() *Player {
+	if len(s.players) == 0 {
+		return nil
+	}
+	return s.players[s.DealerIndex]
+}
+
+func (s *Game) DeckCount() int {
+	return len(s.deck)
+}
+
+func (s *Game) DiscardCount() int {
+	return len(s.discard)
+}
+
+// GetWinner returns the sole highest scorer once anyone reaches the goal.
+// A tie for the lead means another round is played.
 func (s *Game) GetWinner() *Player {
+	var leader *Player
+	tied := false
 	for _, player := range s.players {
-		if player.Points >= s.Settings.EndPoints {
-			return player
+		if leader == nil || player.Points > leader.Points {
+			leader, tied = player, false
+		} else if player.Points == leader.Points {
+			tied = true
 		}
 	}
-	return nil
+	if leader == nil || tied || leader.Points < s.Settings.EndPoints {
+		return nil
+	}
+	return leader
+}
+
+// Standings returns the players ordered from highest to lowest score.
+func (s *Game) Standings() []*Player {
+	players := slices.Clone(s.players)
+	sort.SliceStable(players, func(i, j int) bool {
+		return players[i].Points > players[j].Points
+	})
+	return players
 }

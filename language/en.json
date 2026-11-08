@@ -17,7 +17,7 @@
     "menu": {
       "choose_language": "For english, press %s",
       "enter_code": "Enter the game code to join:",
-      "welcome": "Welcome to the game!",
+      "welcome": "Welcome to Turn Seven!",
       "press_to_create": "Press %s to create a new game",
       "press_to_join": "Press %s to join an existing game"
     },
@@ -26,10 +26,68 @@
       "press_to_start": "Press %s to start the game",
       "player_list_you": "you",
       "player_list_host": "host",
-      "you_are" : "You are %s",
+      "you_are": "You are %s",
       "disconnected_player": "%s has disconnected. Waiting for them to reconnect...",
       "game_over": "Game over! Thanks for playing!",
-      "winner": "The winner is %s!"
+      "winner": "The winner is %s!",
+      "rules_title": "How to play",
+      "final_scores": "Final scores",
+      "points": "%d pts"
+    },
+    "rules": [
+      "Flip number cards one at a time to build your line. On your turn, hit to flip",
+      "another card or stay to bank your points for the round.",
+      "",
+      "* Flip a number you already have and you bust, scoring 0 for the round.",
+      "* Flip 7 different numbers to end the round instantly and earn 15 bonus points.",
+      "* +2 to +10 add to your score; x2 doubles your number cards.",
+      "* Freeze: choose an active player (even you) to bank their points and sit out.",
+      "* Flip Three: choose an active player who must flip the next three cards.",
+      "* Second Chance: discard it instead of busting. Hold only one at a time.",
+      "",
+      "The first player to 200 points at the end of a round wins."
+    ],
+    "card": {
+      "freeze": "Freeze",
+      "flip_three": "Flip Three",
+      "second_chance": "Second Chance",
+      "second_chance_short": "2nd"
+    },
+    "table": {
+      "header": "Round %d  ·  Game %s  ·  Deck %d  ·  Discard %d  ·  Goal %d",
+      "you": "you",
+      "dealer": "dealer",
+      "total": "Total %d",
+      "round_score": "This round %d",
+      "status_active": "Playing",
+      "status_stayed": "Stayed",
+      "status_frozen": "Frozen",
+      "status_busted": "Busted",
+      "status_flip_seven": "FLIP 7!",
+      "log_title": "What happened",
+      "your_turn": "Your turn! Press %s to hit or %s to stay.",
+      "waiting_for": "Waiting for %s...",
+      "choose_target": "Choose who receives %s:",
+      "choosing_target": "%s is choosing who receives %s...",
+      "round_over": "Round over!",
+      "press_next_round": "Press %s to deal the next round.",
+      "waiting_next_round": "Waiting for the host to deal the next round...",
+      "tied_lead": "Tied for the lead past %d. Another round!"
+    },
+    "log": {
+      "round_start": "Round %d. %s deals.",
+      "drew": "%s flipped %s",
+      "busted": "%s busted on a %s!",
+      "second_chance_used": "%s used a Second Chance on a %s",
+      "flip_seven": "%s flipped 7! +15 bonus",
+      "stayed": "%s stayed with %d",
+      "froze": "%s froze %s at %d",
+      "flip_three": "%s makes %s flip three",
+      "gave_second_chance": "%s gave a Second Chance to %s",
+      "discarded": "%s discarded %s (no one could take it)",
+      "reshuffle": "Discards shuffled into a new deck",
+      "deck_empty": "Out of cards, %s stays",
+      "round_end": "Round %d is over"
     }
   },
   "username_first_words": [

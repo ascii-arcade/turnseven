@@ -40,8 +40,30 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m *Model) SetGame(game *games.Game) {
-	m.screen = m.newLobbyScreen()
 	m.Game = game
+	m.screen = m.newLobbyScreen()
+	m.syncScreen()
+}
+
+// syncScreen moves to the screen matching the game's state, so a player who
+// reconnects or misses an update still lands in the right place.
+func (m *Model) syncScreen() {
+	if !m.Game.InProgress() {
+		return
+	}
+	switch m.screen.(type) {
+	case *winnerScreen:
+	case *tableScreen:
+		if m.Game.Phase == games.PhaseGameOver {
+			m.screen = m.newWinnerScreen()
+		}
+	default:
+		if m.Game.Phase == games.PhaseGameOver {
+			m.screen = m.newWinnerScreen()
+		} else {
+			m.screen = m.newTableScreen()
+		}
+	}
 }
 
 func (m *Model) lang() *language.Language {
@@ -105,5 +127,6 @@ func (m *Model) handlePlayerUpdate(msg int) (tea.Model, tea.Cmd) {
 	case messages.WinnerScreen:
 		m.screen = m.newWinnerScreen()
 	}
+	m.syncScreen()
 	return m, waitForRefreshSignal(m.Player.UpdateChan)
 }

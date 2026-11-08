@@ -6,6 +6,6 @@ type Settings struct {
 
 func NewSettings() Settings {
 	return Settings{
-		EndPoints: 10,
+		EndPoints: 200,
 	}
 }

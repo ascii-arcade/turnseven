@@ -12,6 +12,11 @@ func (k Keys) TriggeredBy(msg string) bool {
 	return slices.Contains(k, msg)
 }
 
+// Index returns the position of the key that msg triggered, or -1.
+func (k Keys) Index(msg string) int {
+	return slices.Index(k, msg)
+}
+
 func (k Keys) String(style lipgloss.Style) string {
 	return k.IndexedString(0, style)
 }
@@ -32,8 +37,10 @@ var (
 	PreviousScreen = Keys{"esc"}
 	Submit         = Keys{"enter"}
 
-	ExitApplication    = Keys{"ctrl+c"}
-	GameIncrementPoint = Keys{"a"}
-	GameEndTurn        = Keys{"z"}
-	LobbyStartGame     = Keys{"s"}
+	ExitApplication = Keys{"ctrl+c"}
+	GameHit         = Keys{"h"}
+	GameStay        = Keys{"s"}
+	GameNextRound   = Keys{"n"}
+	GameTargets     = Keys{"1", "2", "3", "4", "5", "6"}
+	LobbyStartGame  = Keys{"s"}
 )

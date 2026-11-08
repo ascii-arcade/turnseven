@@ -40,7 +40,7 @@ func (s *lobbyScreen) Update(msg tea.Msg) (any, tea.Cmd) {
 }
 
 func (s *lobbyScreen) View() string {
-	style := s.style.Width(s.model.width / 2)
+	style := s.style.Width(min(88, s.model.width-12))
 
 	footer := s.model.lang().Get("board", "waiting_for_start")
 	if s.model.Player.IsHost() {
@@ -61,6 +61,8 @@ func (s *lobbyScreen) View() string {
 		lipgloss.Left,
 		style.Align(lipgloss.Center).MarginBottom(2).Render(header),
 		style.Render(playerList),
+		style.Bold(true).Render(s.model.lang().Get("board", "rules_title")),
+		style.MarginBottom(1).Render(s.model.lang().Get("rules")),
 		style.Render(footer),
 	)
 
