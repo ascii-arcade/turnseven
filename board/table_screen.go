@@ -2,6 +2,7 @@ package board
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/ascii-arcade/game-template/colors"
@@ -60,15 +61,18 @@ func (s *tableScreen) View() string {
 
 	playersWidth := s.model.width - logWidth - 6
 	players := s.style.Width(playersWidth).Render(s.players())
+
+	footer := s.prompt() + "\n\n" +
+		s.style.Foreground(colors.Muted).Render(fmt.Sprintf(lang.Get("global", "quit"), keys.ExitApplication.String(s.style)))
+
+	// The log may use whatever height the players and footer leave free.
+	logHeight := max(lipgloss.Height(players), s.model.height-lipgloss.Height(header)-lipgloss.Height(footer)-4)
 	log := s.style.
 		Width(logWidth).
 		PaddingLeft(2).
 		BorderStyle(lipgloss.NormalBorder()).
 		BorderLeft(true).
-		Render(s.log())
-
-	footer := s.prompt() + "\n\n" +
-		s.style.Foreground(colors.Muted).Render(fmt.Sprintf(lang.Get("global", "quit"), keys.ExitApplication.String(s.style)))
+		Render(s.log(logHeight))
 
 	return s.style.Padding(1, 2).Render(lipgloss.JoinVertical(
 		lipgloss.Left,
@@ -137,11 +141,14 @@ func (s *tableScreen) status(p *games.Player) string {
 	}
 }
 
-func (s *tableScreen) log() string {
+// log shows the newest entries that fit in height lines once wrapped.
+func (s *tableScreen) log(height int) string {
 	lang := s.model.lang()
+	wrap := s.style.Width(logWidth - 2)
 
-	lines := []string{s.style.Bold(true).Render(lang.Get("table", "log_title")), ""}
-	for _, entry := range s.model.Game.Log {
+	var entries []string
+	used := 2
+	for _, entry := range slices.Backward(s.model.Game.Log) {
 		args := make([]any, len(entry.Args))
 		for i, arg := range entry.Args {
 			if card, ok := arg.(games.Card); ok {
@@ -149,9 +156,16 @@ func (s *tableScreen) log() string {
 			}
 			args[i] = arg
 		}
-		lines = append(lines, fmt.Sprintf(lang.Get("log", entry.Key), args...))
+		line := wrap.Render(fmt.Sprintf(lang.Get("log", entry.Key), args...))
+		if used += lipgloss.Height(line); used > height {
+			break
+		}
+		entries = append(entries, line)
 	}
-	return strings.Join(lines, "\n")
+	slices.Reverse(entries)
+
+	title := s.style.Bold(true).Render(lang.Get("table", "log_title"))
+	return strings.Join(append([]string{title, ""}, entries...), "\n")
 }
 
 func (s *tableScreen) prompt() string {
