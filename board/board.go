@@ -53,6 +53,9 @@ func (m *Model) syncScreen() {
 	}
 	switch m.screen.(type) {
 	case *winnerScreen:
+		if m.Game.Phase != games.PhaseGameOver {
+			m.screen = m.newTableScreen()
+		}
 	case *tableScreen:
 		if m.Game.Phase == games.PhaseGameOver {
 			m.screen = m.newWinnerScreen()

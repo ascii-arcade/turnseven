@@ -32,7 +32,9 @@
       "winner": "¡El ganador es %s!",
       "rules_title": "Cómo jugar",
       "final_scores": "Puntuación final",
-      "points": "%d pts"
+      "points": "%d pts",
+      "press_to_restart": "Presiona %s para iniciar un nuevo juego",
+      "waiting_for_restart": "Esperando a que el anfitrión inicie un nuevo juego..."
     },
     "rules": [
       "Voltea cartas numéricas una a una para formar tu fila. En tu turno, pide otra",

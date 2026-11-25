@@ -143,6 +143,41 @@ func TestRandomGames(t *testing.T) {
 	}
 }
 
+func TestRestart(t *testing.T) {
+	host := &Player{Name: "A", isHost: true}
+	guest := &Player{Name: "B"}
+	g := newTestGame(host, guest)
+	g.inProgress = true
+	g.Phase = PhaseGameOver
+	g.Round = 9
+	g.DealerIndex = 1
+	host.Points, guest.Points = 210, 150
+	host.Hand = []Card{{Kind: CardNumber, Value: 5}}
+	g.deck = newDeck()[1:]
+
+	_ = g.Restart(guest)
+	if g.Phase != PhaseGameOver {
+		t.Fatal("a guest restarted the game")
+	}
+
+	if err := g.Restart(host); err != nil {
+		t.Fatalf("restart failed: %v", err)
+	}
+	if g.Phase == PhaseGameOver || g.Round != 1 || g.DealerIndex != 0 {
+		t.Fatalf("game not reset: phase %d, round %d, dealer %d", g.Phase, g.Round, g.DealerIndex)
+	}
+	if host.Points != 0 || guest.Points != 0 {
+		t.Fatalf("points not reset: %d, %d", host.Points, guest.Points)
+	}
+	checkCardCount(t, g)
+
+	round := g.Round
+	_ = g.Restart(host)
+	if g.Round != round {
+		t.Fatal("restarted a game that was not over")
+	}
+}
+
 func newTestGame(players ...*Player) *Game {
 	return &Game{Settings: NewSettings(), players: players}
 }

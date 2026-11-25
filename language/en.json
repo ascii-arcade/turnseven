@@ -32,7 +32,9 @@
       "winner": "The winner is %s!",
       "rules_title": "How to play",
       "final_scores": "Final scores",
-      "points": "%d pts"
+      "points": "%d pts",
+      "press_to_restart": "Press %s to start a new game",
+      "waiting_for_restart": "Waiting for the host to start a new game..."
     },
     "rules": [
       "Flip number cards one at a time to build your line. On your turn, hit to flip",
