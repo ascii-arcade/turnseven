@@ -2,6 +2,7 @@ package games
 
 import (
 	"errors"
+	"time"
 
 	"github.com/ascii-arcade/game-template/messages"
 )
@@ -37,6 +38,7 @@ func (s *Game) begin() error {
 	s.Log = nil
 	s.deck = newDeck()
 	s.discard = nil
+	s.ShuffledAt = time.Time{}
 	s.inProgress = true
 
 	for _, p := range s.players {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/ascii-arcade/game-template/colors"
 	"github.com/ascii-arcade/game-template/games"
@@ -12,7 +13,15 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-const logWidth = 28
+const (
+	logWidth = 28
+
+	// lowDeck is when the deck count turns to a warning that a reshuffle is near.
+	lowDeck = 10
+
+	// shuffleFlash is how long the deck panel announces a reshuffle.
+	shuffleFlash = 3 * time.Second
+)
 
 type tableScreen struct {
 	model *Model
@@ -56,7 +65,7 @@ func (s *tableScreen) View() string {
 
 	header := s.style.Bold(true).Render(fmt.Sprintf(
 		lang.Get("table", "header"),
-		game.Round, game.Code, game.DeckCount(), game.DiscardCount(), game.Settings.EndPoints,
+		game.Round, game.Code, game.Settings.EndPoints,
 	))
 
 	playersWidth := s.model.width - logWidth - 6
@@ -72,7 +81,7 @@ func (s *tableScreen) View() string {
 		PaddingLeft(2).
 		BorderStyle(lipgloss.NormalBorder()).
 		BorderLeft(true).
-		Render(s.log(logHeight))
+		Render(s.deckPanel() + "\n" + s.log(logHeight-2))
 
 	return s.style.Padding(1, 2).Render(lipgloss.JoinVertical(
 		lipgloss.Left,
@@ -139,6 +148,30 @@ func (s *tableScreen) status(p *games.Player) string {
 	}
 }
 
+// deckPanel shows the deck and discard counts over a rule that briefly turns
+// into a notice after a reshuffle.
+func (s *tableScreen) deckPanel() string {
+	game := s.model.Game
+	lang := s.model.lang()
+
+	deckStyle := s.style
+	if game.DeckCount() < lowDeck {
+		deckStyle = deckStyle.Bold(true).Foreground(colors.Highlight)
+	}
+	counts := deckStyle.Render(fmt.Sprintf(lang.Get("table", "deck_count"), game.DeckCount())) + "   " +
+		fmt.Sprintf(lang.Get("table", "discard_count"), game.DiscardCount())
+
+	rule := s.style.Foreground(colors.Muted).Render(strings.Repeat("─", logWidth-2))
+	if recentlyShuffled(game) {
+		rule = s.style.Bold(true).Foreground(colors.Action).Render(lang.Get("table", "shuffled"))
+	}
+	return counts + "\n" + rule
+}
+
+func recentlyShuffled(game *games.Game) bool {
+	return !game.ShuffledAt.IsZero() && time.Since(game.ShuffledAt) < shuffleFlash
+}
+
 // log shows the newest entries that fit in height lines once wrapped.
 func (s *tableScreen) log(height int) string {
 	lang := s.model.lang()
@@ -159,6 +192,10 @@ func (s *tableScreen) log(height int) string {
 			}
 		}
 		line := wrap.Render(fmt.Sprintf(lang.Get("log", entry.Key), args...))
+		if entry.Key == "reshuffle" {
+			line = s.style.Foreground(colors.Muted).Render(strings.Repeat("─", logWidth-2)) + "\n" +
+				wrap.Bold(true).Foreground(colors.Action).Render("↻ "+fmt.Sprintf(lang.Get("log", entry.Key), args...))
+		}
 		if used += lipgloss.Height(line); used > height {
 			break
 		}

@@ -56,7 +56,7 @@
       "second_chance_short": "2nd"
     },
     "table": {
-      "header": "Round %d  ·  Game %s  ·  Deck %d  ·  Discard %d  ·  Goal %d",
+      "header": "Round %d  ·  Game %s  ·  Goal %d",
       "you": "you",
       "dealer": "dealer",
       "total": "Total %d",
@@ -67,6 +67,9 @@
       "status_busted": "Busted",
       "status_flip_seven": "FLIP 7!",
       "log_title": "What happened",
+      "deck_count": "Deck %d",
+      "discard_count": "Discard %d",
+      "shuffled": "↻ Shuffled!",
       "your_turn": "Your turn! Press %s to hit or %s to stay.",
       "waiting_for": "Waiting for %s...",
       "choose_target": "Choose who receives %s:",
@@ -87,7 +90,7 @@
       "flip_three": "%s makes %s flip three",
       "gave_second_chance": "%s gave a Second Chance to %s",
       "discarded": "%s discarded %s (no one could take it)",
-      "reshuffle": "Discards shuffled into a new deck",
+      "reshuffle": "Reshuffled %d discards into the deck",
       "deck_empty": "Out of cards, %s stays",
       "round_end": "Round %d is over"
     }

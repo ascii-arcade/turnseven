@@ -3,6 +3,7 @@ package board
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/ascii-arcade/game-template/config"
 	"github.com/ascii-arcade/game-template/games"
@@ -140,5 +141,14 @@ func (m *Model) handlePlayerUpdate(msg int) (tea.Model, tea.Cmd) {
 		m.screen = m.newWinnerScreen()
 	}
 	m.syncScreen()
-	return m, waitForRefreshSignal(m.Player.UpdateChan)
+
+	cmds := []tea.Cmd{waitForRefreshSignal(m.Player.UpdateChan)}
+	if recentlyShuffled(m.Game) {
+		// Redraw once the shuffle notice has run its course.
+		remaining := shuffleFlash - time.Since(m.Game.ShuffledAt)
+		cmds = append(cmds, tea.Tick(remaining, func(time.Time) tea.Msg { return shuffleFlashDone{} }))
+	}
+	return m, tea.Batch(cmds...)
 }
+
+type shuffleFlashDone struct{}

@@ -2,6 +2,7 @@ package games
 
 import (
 	"slices"
+	"time"
 
 	"github.com/ascii-arcade/game-template/messages"
 )
@@ -275,7 +276,8 @@ func (s *Game) draw() (Card, bool) {
 		}
 		s.deck, s.discard = s.discard, nil
 		shuffle(s.deck)
-		s.addLog("reshuffle")
+		s.ShuffledAt = time.Now()
+		s.addLog("reshuffle", len(s.deck))
 	}
 
 	card := s.deck[len(s.deck)-1]

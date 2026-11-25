@@ -4,6 +4,7 @@ import (
 	"slices"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/ascii-arcade/game-template/messages"
 	"github.com/charmbracelet/lipgloss"
@@ -19,6 +20,7 @@ type Game struct {
 	Round            int
 	Phase            Phase
 	Log              []LogEntry
+	ShuffledAt       time.Time
 	inProgress       bool
 	mu               sync.Mutex
 	players          []*Player
