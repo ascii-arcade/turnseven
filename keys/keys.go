@@ -41,6 +41,7 @@ var (
 	GameHit         = Keys{"h"}
 	GameStay        = Keys{"s"}
 	GameNextRound   = Keys{"n"}
+	GameRestart     = Keys{"r"}
 	GameTargets     = Keys{"1", "2", "3", "4", "5", "6"}
 	LobbyStartGame  = Keys{"s"}
 )

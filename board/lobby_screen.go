@@ -83,8 +83,8 @@ func (s *lobbyScreen) View() string {
 func (s *lobbyScreen) playerList() string {
 	playerList := ""
 	for _, p := range s.model.Game.OrderedPlayers() {
-		playerList += "* " + p.Name
-		if p.Name == s.model.Player.Name {
+		playerList += "* " + s.model.playerName(p)
+		if p == s.model.Player {
 			playerList += fmt.Sprintf(" (%s)", s.model.lang().Get("board", "player_list_you"))
 		}
 		if p.IsHost() {

@@ -2,7 +2,9 @@ package board
 
 import (
 	"fmt"
+	"slices"
 	"strings"
+	"time"
 
 	"github.com/ascii-arcade/game-template/colors"
 	"github.com/ascii-arcade/game-template/games"
@@ -11,7 +13,15 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-const logWidth = 40
+const (
+	logWidth = 28
+
+	// lowDeck is when the deck count turns to a warning that a reshuffle is near.
+	lowDeck = 10
+
+	// shuffleFlash is how long the deck panel announces a reshuffle.
+	shuffleFlash = 3 * time.Second
+)
 
 type tableScreen struct {
 	model *Model
@@ -55,20 +65,23 @@ func (s *tableScreen) View() string {
 
 	header := s.style.Bold(true).Render(fmt.Sprintf(
 		lang.Get("table", "header"),
-		game.Round, game.Code, game.DeckCount(), game.DiscardCount(), game.Settings.EndPoints,
+		game.Round, game.Code, game.Settings.EndPoints,
 	))
 
 	playersWidth := s.model.width - logWidth - 6
 	players := s.style.Width(playersWidth).Render(s.players())
+
+	footer := s.prompt() + "\n\n" +
+		s.style.Foreground(colors.Muted).Render(fmt.Sprintf(lang.Get("global", "quit"), keys.ExitApplication.String(s.style)))
+
+	// The log may use whatever height the players and footer leave free.
+	logHeight := max(lipgloss.Height(players), s.model.height-lipgloss.Height(header)-lipgloss.Height(footer)-4)
 	log := s.style.
 		Width(logWidth).
 		PaddingLeft(2).
 		BorderStyle(lipgloss.NormalBorder()).
 		BorderLeft(true).
-		Render(s.log())
-
-	footer := s.prompt() + "\n\n" +
-		s.style.Foreground(colors.Muted).Render(fmt.Sprintf(lang.Get("global", "quit"), keys.ExitApplication.String(s.style)))
+		Render(s.deckPanel() + "\n" + s.log(logHeight-2))
 
 	return s.style.Padding(1, 2).Render(lipgloss.JoinVertical(
 		lipgloss.Left,
@@ -89,13 +102,11 @@ func (s *tableScreen) players() string {
 	var rows []string
 	for _, p := range game.OrderedPlayers() {
 		marker := "  "
-		nameStyle := s.style.Bold(true)
 		if showTurn && p == current {
-			marker = "▶ "
-			nameStyle = nameStyle.Foreground(colors.Highlight)
+			marker = s.style.Bold(true).Foreground(colors.Highlight).Render("▶ ")
 		}
 
-		name := p.Name
+		name := s.model.playerName(p)
 		var tags []string
 		if p == s.model.Player {
 			tags = append(tags, lang.Get("table", "you"))
@@ -104,7 +115,7 @@ func (s *tableScreen) players() string {
 			tags = append(tags, lang.Get("table", "dealer"))
 		}
 		if len(tags) > 0 {
-			name += " (" + strings.Join(tags, ", ") + ")"
+			name += s.style.Bold(true).Render(" (" + strings.Join(tags, ", ") + ")")
 		}
 
 		info := strings.Join([]string{
@@ -114,7 +125,7 @@ func (s *tableScreen) players() string {
 		}, "  ·  ")
 
 		rows = append(rows,
-			marker+nameStyle.Render(name)+"   "+info,
+			marker+name+"   "+info,
 			s.style.PaddingLeft(2).Render(s.model.renderLine(p)),
 		)
 	}
@@ -137,21 +148,63 @@ func (s *tableScreen) status(p *games.Player) string {
 	}
 }
 
-func (s *tableScreen) log() string {
+// deckPanel shows the deck and discard counts over a rule that briefly turns
+// into a notice after a reshuffle.
+func (s *tableScreen) deckPanel() string {
+	game := s.model.Game
 	lang := s.model.lang()
 
-	lines := []string{s.style.Bold(true).Render(lang.Get("table", "log_title")), ""}
-	for _, entry := range s.model.Game.Log {
+	deckStyle := s.style
+	if game.DeckCount() < lowDeck {
+		deckStyle = deckStyle.Bold(true).Foreground(colors.Highlight)
+	}
+	counts := deckStyle.Render(fmt.Sprintf(lang.Get("table", "deck_count"), game.DeckCount())) + "   " +
+		fmt.Sprintf(lang.Get("table", "discard_count"), game.DiscardCount())
+
+	rule := s.style.Foreground(colors.Muted).Render(strings.Repeat("─", logWidth-2))
+	if recentlyShuffled(game) {
+		rule = s.style.Bold(true).Foreground(colors.Action).Render(lang.Get("table", "shuffled"))
+	}
+	return counts + "\n" + rule
+}
+
+func recentlyShuffled(game *games.Game) bool {
+	return !game.ShuffledAt.IsZero() && time.Since(game.ShuffledAt) < shuffleFlash
+}
+
+// log shows the newest entries that fit in height lines once wrapped.
+func (s *tableScreen) log(height int) string {
+	lang := s.model.lang()
+	wrap := s.style.Width(logWidth - 2)
+
+	var entries []string
+	used := 2
+	for _, entry := range slices.Backward(s.model.Game.Log) {
 		args := make([]any, len(entry.Args))
 		for i, arg := range entry.Args {
-			if card, ok := arg.(games.Card); ok {
-				arg = cardLabel(lang, card)
+			switch arg := arg.(type) {
+			case games.Card:
+				args[i] = cardLabel(lang, arg)
+			case *games.Player:
+				args[i] = s.model.playerInitials(arg)
+			default:
+				args[i] = arg
 			}
-			args[i] = arg
 		}
-		lines = append(lines, fmt.Sprintf(lang.Get("log", entry.Key), args...))
+		line := wrap.Render(fmt.Sprintf(lang.Get("log", entry.Key), args...))
+		if entry.Key == "reshuffle" {
+			line = s.style.Foreground(colors.Muted).Render(strings.Repeat("─", logWidth-2)) + "\n" +
+				wrap.Bold(true).Foreground(colors.Action).Render("↻ "+fmt.Sprintf(lang.Get("log", entry.Key), args...))
+		}
+		if used += lipgloss.Height(line); used > height {
+			break
+		}
+		entries = append(entries, line)
 	}
-	return strings.Join(lines, "\n")
+	slices.Reverse(entries)
+
+	title := s.style.Bold(true).Render(lang.Get("table", "log_title"))
+	return strings.Join(append([]string{title, ""}, entries...), "\n")
 }
 
 func (s *tableScreen) prompt() string {
@@ -162,7 +215,7 @@ func (s *tableScreen) prompt() string {
 	if chooser, card, targets, ok := game.PendingChoice(); ok {
 		cardName := s.style.Foreground(colors.Action).Bold(true).Render(cardLabel(lang, card))
 		if chooser != s.model.Player {
-			return fmt.Sprintf(lang.Get("table", "choosing_target"), chooser.Name, cardName)
+			return fmt.Sprintf(lang.Get("table", "choosing_target"), s.model.playerName(chooser), cardName)
 		}
 
 		options := []string{fmt.Sprintf(lang.Get("table", "choose_target"), cardName)}
@@ -170,7 +223,7 @@ func (s *tableScreen) prompt() string {
 			if i >= len(keys.GameTargets) {
 				break
 			}
-			options = append(options, fmt.Sprintf("  %s %s", keys.GameTargets.IndexedString(i, s.style), target.Name))
+			options = append(options, fmt.Sprintf("  %s %s", keys.GameTargets.IndexedString(i, s.style), s.model.playerName(target)))
 		}
 		return strings.Join(options, "\n")
 	}
@@ -194,5 +247,5 @@ func (s *tableScreen) prompt() string {
 		}
 	}
 
-	return fmt.Sprintf(lang.Get("table", "waiting_for"), game.GetCurrentPlayer().Name)
+	return fmt.Sprintf(lang.Get("table", "waiting_for"), s.model.playerName(game.GetCurrentPlayer()))
 }

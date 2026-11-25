@@ -3,6 +3,7 @@ package board
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/ascii-arcade/game-template/config"
 	"github.com/ascii-arcade/game-template/games"
@@ -53,6 +54,9 @@ func (m *Model) syncScreen() {
 	}
 	switch m.screen.(type) {
 	case *winnerScreen:
+		if m.Game.Phase != games.PhaseGameOver {
+			m.screen = m.newTableScreen()
+		}
 	case *tableScreen:
 		if m.Game.Phase == games.PhaseGameOver {
 			m.screen = m.newWinnerScreen()
@@ -64,6 +68,15 @@ func (m *Model) syncScreen() {
 			m.screen = m.newTableScreen()
 		}
 	}
+}
+
+// playerName renders a player's name in their color.
+func (m *Model) playerName(p *games.Player) string {
+	return m.style.Bold(true).Foreground(p.Color).Render(p.Name)
+}
+
+func (m *Model) playerInitials(p *games.Player) string {
+	return m.style.Bold(true).Foreground(p.Color).Render(p.Initials())
 }
 
 func (m *Model) lang() *language.Language {
@@ -99,7 +112,7 @@ func (m Model) View() string {
 	if len(disconnectedPlayers) > 0 {
 		var names []string
 		for _, p := range disconnectedPlayers {
-			names = append(names, p.Name)
+			names = append(names, m.playerName(p))
 		}
 		return m.style.Render(
 			lipgloss.JoinVertical(
@@ -128,5 +141,14 @@ func (m *Model) handlePlayerUpdate(msg int) (tea.Model, tea.Cmd) {
 		m.screen = m.newWinnerScreen()
 	}
 	m.syncScreen()
-	return m, waitForRefreshSignal(m.Player.UpdateChan)
+
+	cmds := []tea.Cmd{waitForRefreshSignal(m.Player.UpdateChan)}
+	if recentlyShuffled(m.Game) {
+		// Redraw once the shuffle notice has run its course.
+		remaining := shuffleFlash - time.Since(m.Game.ShuffledAt)
+		cmds = append(cmds, tea.Tick(remaining, func(time.Time) tea.Msg { return shuffleFlashDone{} }))
+	}
+	return m, tea.Batch(cmds...)
 }
+
+type shuffleFlashDone struct{}

@@ -17,7 +17,7 @@ func (s *Game) Stay(player *Player) {
 			return
 		}
 		player.Status = StatusStayed
-		s.addLog("stayed", player.Name, player.RoundScore())
+		s.addLog("stayed", player, player.RoundScore())
 		s.passTurn = true
 		s.advance()
 	})

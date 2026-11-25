@@ -32,7 +32,9 @@
       "winner": "¡El ganador es %s!",
       "rules_title": "Cómo jugar",
       "final_scores": "Puntuación final",
-      "points": "%d pts"
+      "points": "%d pts",
+      "press_to_restart": "Presiona %s para iniciar un nuevo juego",
+      "waiting_for_restart": "Esperando a que el anfitrión inicie un nuevo juego..."
     },
     "rules": [
       "Voltea cartas numéricas una a una para formar tu fila. En tu turno, pide otra",
@@ -54,7 +56,7 @@
       "second_chance_short": "2ª"
     },
     "table": {
-      "header": "Ronda %d  ·  Juego %s  ·  Mazo %d  ·  Descarte %d  ·  Meta %d",
+      "header": "Ronda %d  ·  Juego %s  ·  Meta %d",
       "you": "tú",
       "dealer": "reparte",
       "total": "Total %d",
@@ -65,6 +67,9 @@
       "status_busted": "Pasado",
       "status_flip_seven": "¡FLIP 7!",
       "log_title": "Qué pasó",
+      "deck_count": "Mazo %d",
+      "discard_count": "Descarte %d",
+      "shuffled": "↻ ¡Barajado!",
       "your_turn": "¡Tu turno! Presiona %s para pedir o %s para plantarte.",
       "waiting_for": "Esperando a %s...",
       "choose_target": "Elige quién recibe %s:",
@@ -85,7 +90,7 @@
       "flip_three": "%s hace que %s voltee tres",
       "gave_second_chance": "%s dio una Segunda Oportunidad a %s",
       "discarded": "%s descartó %s (nadie podía tomarla)",
-      "reshuffle": "El descarte se baraja como nuevo mazo",
+      "reshuffle": "Se barajaron %d descartes como nuevo mazo",
       "deck_empty": "No quedan cartas, %s se planta",
       "round_end": "Termina la ronda %d"
     }
