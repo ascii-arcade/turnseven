@@ -38,12 +38,11 @@ func (s *joinScreen) Update(msg tea.Msg) (any, tea.Cmd) {
 			if len(s.model.gameCodeInput.Value()) == 7 {
 				code := strings.ToUpper(s.model.gameCodeInput.Value())
 
+				// A game in progress can only be rejoined by one of its players.
 				game, err := games.GetOpenGame(code)
-				if err != nil {
-					if !errors.Is(err, games.ErrGameInProgress) && !game.HasPlayer(s.model.player) {
-						s.model.setError(err.Error())
-						return s.model, nil
-					}
+				if err != nil && !(errors.Is(err, games.ErrGameInProgress) && game.HasPlayer(s.model.player)) {
+					s.model.setError(err.Error())
+					return s.model, nil
 				}
 
 				if err := s.model.joinGame(code, false); err != nil {
@@ -56,11 +55,10 @@ func (s *joinScreen) Update(msg tea.Msg) (any, tea.Cmd) {
 		}
 
 		s.model.clearError()
+		before := s.model.gameCodeInput.Value()
 		s.model.gameCodeInput, cmd = s.model.gameCodeInput.Update(msg)
-		s.model.gameCodeInput.SetValue(strings.ToUpper(s.model.gameCodeInput.Value()))
-
-		if len(s.model.gameCodeInput.Value()) == 3 && !strings.Contains(s.model.gameCodeInput.Value(), "-") {
-			s.model.gameCodeInput.SetValue(s.model.gameCodeInput.Value() + "-")
+		if value := s.model.gameCodeInput.Value(); value != before {
+			s.model.gameCodeInput.SetValue(formatCode(before, value))
 			s.model.gameCodeInput.CursorEnd()
 		}
 	}
@@ -79,4 +77,18 @@ func (s *joinScreen) View() string {
 	content.WriteString(s.style.Foreground(colors.Error).Render(errorMessage))
 
 	return content.String()
+}
+
+// formatCode uppercases a typed game code and shows a dash after the third
+// letter. The dash is only formatting: deleting it deletes the letter before
+// it instead.
+func formatCode(before, value string) string {
+	letters := strings.ToUpper(strings.ReplaceAll(value, "-", ""))
+	if len(value) < len(before) && letters != "" && letters == strings.ToUpper(strings.ReplaceAll(before, "-", "")) {
+		letters = letters[:len(letters)-1]
+	}
+	if len(letters) >= 3 {
+		return letters[:3] + "-" + letters[3:]
+	}
+	return letters
 }
