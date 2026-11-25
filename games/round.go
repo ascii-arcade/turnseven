@@ -51,7 +51,7 @@ func (s *Game) startRound() {
 	s.passTurn = false
 	s.flipSeven = nil
 
-	s.addLog("round_start", s.Round, s.players[s.DealerIndex].Name)
+	s.addLog("round_start", s.Round, s.Dealer())
 	s.advance()
 }
 
@@ -95,7 +95,7 @@ func (s *Game) advance() {
 			s.choices = s.choices[1:]
 			if len(targets) == 0 {
 				s.discard = append(s.discard, c.card)
-				s.addLog("discarded", c.chooser.Name, c.card)
+				s.addLog("discarded", c.chooser, c.card)
 				continue
 			}
 			s.applyChoice(c, targets[0])
@@ -131,10 +131,10 @@ func (s *Game) drawFor(p *Player, job *flipJob) {
 	card, ok := s.draw()
 	if !ok {
 		p.Status = StatusStayed
-		s.addLog("deck_empty", p.Name)
+		s.addLog("deck_empty", p)
 		return
 	}
-	s.addLog("drew", p.Name, card)
+	s.addLog("drew", p, card)
 
 	switch card.Kind {
 	case CardNumber:
@@ -142,19 +142,19 @@ func (s *Game) drawFor(p *Player, job *flipJob) {
 			p.Hand = append(p.Hand, card)
 			if p.FlippedSeven() {
 				s.flipSeven = p
-				s.addLog("flip_seven", p.Name)
+				s.addLog("flip_seven", p)
 			}
 			return
 		}
 		if p.HasSecondChance {
 			p.HasSecondChance = false
 			s.discard = append(s.discard, card, Card{Kind: CardSecondChance})
-			s.addLog("second_chance_used", p.Name, card)
+			s.addLog("second_chance_used", p, card)
 			return
 		}
 		p.Status = StatusBusted
 		p.BustCard = &card
-		s.addLog("busted", p.Name, card)
+		s.addLog("busted", p, card)
 
 	case CardPlus, CardTimesTwo:
 		p.Hand = append(p.Hand, card)
@@ -199,14 +199,14 @@ func (s *Game) applyChoice(c pendingChoice, target *Player) {
 	case CardFreeze:
 		target.Status = StatusFrozen
 		s.discard = append(s.discard, c.card)
-		s.addLog("froze", c.chooser.Name, target.Name, target.RoundScore())
+		s.addLog("froze", c.chooser, target, target.RoundScore())
 	case CardFlipThree:
 		s.discard = append(s.discard, c.card)
 		s.flipJobs = append(s.flipJobs, &flipJob{player: target, remaining: 3})
-		s.addLog("flip_three", c.chooser.Name, target.Name)
+		s.addLog("flip_three", c.chooser, target)
 	case CardSecondChance:
 		target.HasSecondChance = true
-		s.addLog("gave_second_chance", c.chooser.Name, target.Name)
+		s.addLog("gave_second_chance", c.chooser, target)
 	}
 }
 

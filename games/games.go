@@ -2,7 +2,10 @@ package games
 
 import (
 	"errors"
+	"math/rand/v2"
+	"slices"
 
+	"github.com/ascii-arcade/game-template/colors"
 	"github.com/ascii-arcade/game-template/generaterandom"
 )
 
@@ -14,10 +17,16 @@ var (
 var games = make(map[string]*Game)
 
 func New() *Game {
+	palette := slices.Clone(colors.Players)
+	rand.Shuffle(len(palette), func(i, j int) {
+		palette[i], palette[j] = palette[j], palette[i]
+	})
+
 	game := &Game{
 		Code:     generaterandom.Code(),
 		Settings: NewSettings(),
 		players:  make([]*Player, 0),
+		palette:  palette,
 	}
 	games[game.Code] = game
 

@@ -69,6 +69,15 @@ func (m *Model) syncScreen() {
 	}
 }
 
+// playerName renders a player's name in their color.
+func (m *Model) playerName(p *games.Player) string {
+	return m.style.Bold(true).Foreground(p.Color).Render(p.Name)
+}
+
+func (m *Model) playerInitials(p *games.Player) string {
+	return m.style.Bold(true).Foreground(p.Color).Render(p.Initials())
+}
+
 func (m *Model) lang() *language.Language {
 	return m.Player.LanguagePreference.Lang
 }
@@ -102,7 +111,7 @@ func (m Model) View() string {
 	if len(disconnectedPlayers) > 0 {
 		var names []string
 		for _, p := range disconnectedPlayers {
-			names = append(names, p.Name)
+			names = append(names, m.playerName(p))
 		}
 		return m.style.Render(
 			lipgloss.JoinVertical(

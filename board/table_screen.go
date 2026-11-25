@@ -12,7 +12,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-const logWidth = 40
+const logWidth = 28
 
 type tableScreen struct {
 	model *Model
@@ -93,13 +93,11 @@ func (s *tableScreen) players() string {
 	var rows []string
 	for _, p := range game.OrderedPlayers() {
 		marker := "  "
-		nameStyle := s.style.Bold(true)
 		if showTurn && p == current {
-			marker = "▶ "
-			nameStyle = nameStyle.Foreground(colors.Highlight)
+			marker = s.style.Bold(true).Foreground(colors.Highlight).Render("▶ ")
 		}
 
-		name := p.Name
+		name := s.model.playerName(p)
 		var tags []string
 		if p == s.model.Player {
 			tags = append(tags, lang.Get("table", "you"))
@@ -108,7 +106,7 @@ func (s *tableScreen) players() string {
 			tags = append(tags, lang.Get("table", "dealer"))
 		}
 		if len(tags) > 0 {
-			name += " (" + strings.Join(tags, ", ") + ")"
+			name += s.style.Bold(true).Render(" (" + strings.Join(tags, ", ") + ")")
 		}
 
 		info := strings.Join([]string{
@@ -118,7 +116,7 @@ func (s *tableScreen) players() string {
 		}, "  ·  ")
 
 		rows = append(rows,
-			marker+nameStyle.Render(name)+"   "+info,
+			marker+name+"   "+info,
 			s.style.PaddingLeft(2).Render(s.model.renderLine(p)),
 		)
 	}
@@ -151,10 +149,14 @@ func (s *tableScreen) log(height int) string {
 	for _, entry := range slices.Backward(s.model.Game.Log) {
 		args := make([]any, len(entry.Args))
 		for i, arg := range entry.Args {
-			if card, ok := arg.(games.Card); ok {
-				arg = cardLabel(lang, card)
+			switch arg := arg.(type) {
+			case games.Card:
+				args[i] = cardLabel(lang, arg)
+			case *games.Player:
+				args[i] = s.model.playerInitials(arg)
+			default:
+				args[i] = arg
 			}
-			args[i] = arg
 		}
 		line := wrap.Render(fmt.Sprintf(lang.Get("log", entry.Key), args...))
 		if used += lipgloss.Height(line); used > height {
@@ -176,7 +178,7 @@ func (s *tableScreen) prompt() string {
 	if chooser, card, targets, ok := game.PendingChoice(); ok {
 		cardName := s.style.Foreground(colors.Action).Bold(true).Render(cardLabel(lang, card))
 		if chooser != s.model.Player {
-			return fmt.Sprintf(lang.Get("table", "choosing_target"), chooser.Name, cardName)
+			return fmt.Sprintf(lang.Get("table", "choosing_target"), s.model.playerName(chooser), cardName)
 		}
 
 		options := []string{fmt.Sprintf(lang.Get("table", "choose_target"), cardName)}
@@ -184,7 +186,7 @@ func (s *tableScreen) prompt() string {
 			if i >= len(keys.GameTargets) {
 				break
 			}
-			options = append(options, fmt.Sprintf("  %s %s", keys.GameTargets.IndexedString(i, s.style), target.Name))
+			options = append(options, fmt.Sprintf("  %s %s", keys.GameTargets.IndexedString(i, s.style), s.model.playerName(target)))
 		}
 		return strings.Join(options, "\n")
 	}
@@ -208,5 +210,5 @@ func (s *tableScreen) prompt() string {
 		}
 	}
 
-	return fmt.Sprintf(lang.Get("table", "waiting_for"), game.GetCurrentPlayer().Name)
+	return fmt.Sprintf(lang.Get("table", "waiting_for"), s.model.playerName(game.GetCurrentPlayer()))
 }

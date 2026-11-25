@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/ascii-arcade/game-template/messages"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/ssh"
 )
 
@@ -21,6 +22,7 @@ type Game struct {
 	inProgress       bool
 	mu               sync.Mutex
 	players          []*Player
+	palette          []lipgloss.Color
 
 	deck      []Card
 	discard   []Card
@@ -87,6 +89,7 @@ func (s *Game) AddPlayer(player *Player, isHost bool) error {
 		}
 
 		player.SetTurnOrder(maxTurnOrder + 1)
+		player.Color = s.unusedColor()
 		if isHost {
 			player.MakeHost()
 		}
@@ -100,6 +103,16 @@ func (s *Game) AddPlayer(player *Player, isHost bool) error {
 		s.players = append(s.players, player)
 		return nil
 	})
+}
+
+// unusedColor picks the first palette color nobody at the table has.
+func (s *Game) unusedColor() lipgloss.Color {
+	for _, c := range s.palette {
+		if !slices.ContainsFunc(s.players, func(p *Player) bool { return p.Color == c }) {
+			return c
+		}
+	}
+	return ""
 }
 
 func (s *Game) RemovePlayer(player *Player) {

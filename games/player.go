@@ -2,8 +2,12 @@ package games
 
 import (
 	"context"
+	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/ascii-arcade/game-template/language"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/ssh"
 )
 
@@ -23,6 +27,7 @@ const (
 
 type Player struct {
 	Name      string
+	Color     lipgloss.Color
 	Points    int
 	TurnOrder int
 
@@ -64,6 +69,16 @@ func (p *Player) IsHost() bool {
 
 func (p *Player) OnDisconnect(fn func()) {
 	p.onDisconnect = append(p.onDisconnect, fn)
+}
+
+// Initials shortens the name to the first letter of each word.
+func (p *Player) Initials() string {
+	var initials []rune
+	for _, word := range strings.Fields(p.Name) {
+		r, _ := utf8.DecodeRuneInString(word)
+		initials = append(initials, unicode.ToUpper(r))
+	}
+	return string(initials)
 }
 
 func (p *Player) IsActive() bool {

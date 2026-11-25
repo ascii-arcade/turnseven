@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	MinimumHeight = 40
-	MinimumWidth  = 120
+	MinimumHeight = 38
+	MinimumWidth  = 112
 )
 
 var (

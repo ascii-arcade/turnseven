@@ -9,6 +9,9 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// nameWidth lines up the final scores; generated names run up to 25 characters.
+const nameWidth = 26
+
 type winnerScreen struct {
 	model *Model
 	style lipgloss.Style
@@ -43,12 +46,13 @@ func (s *winnerScreen) View() string {
 		"",
 	}
 	if winner := s.model.Game.GetWinner(); winner != nil {
-		rows = append(rows, s.model.style.Bold(true).Render(fmt.Sprintf(lang.Get("board", "winner"), winner.Name)), "")
+		rows = append(rows, s.model.style.Bold(true).Render(fmt.Sprintf(lang.Get("board", "winner"), s.model.playerName(winner))), "")
 	}
 
 	rows = append(rows, s.style.Underline(true).Render(lang.Get("board", "final_scores")))
 	for i, p := range s.model.Game.Standings() {
-		rows = append(rows, fmt.Sprintf("%d. %-24s %s", i+1, p.Name, fmt.Sprintf(lang.Get("board", "points"), p.Points)))
+		name := s.style.Width(nameWidth).Render(s.model.playerName(p))
+		rows = append(rows, fmt.Sprintf("%d. %s %s", i+1, name, fmt.Sprintf(lang.Get("board", "points"), p.Points)))
 	}
 	rows = append(rows, "", s.restartPrompt(), fmt.Sprintf(lang.Get("global", "quit"), keys.ExitApplication.String(s.style)))
 
